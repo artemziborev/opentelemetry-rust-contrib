@@ -29,7 +29,7 @@
 // The benchmark will automatically skip if user_events are not supported
 // on the current system (kernel < 6.4 or missing user_events support).
 
-use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use opentelemetry_appender_tracing::layer as tracing_layer;
 use opentelemetry_sdk::logs::SdkLoggerProvider;
 use opentelemetry_sdk::Resource;
@@ -206,7 +206,7 @@ impl UserEventsListenerGuard {
     fn check_user_events_available() -> Result<String, String> {
         let base_path = Self::get_base_path()?;
         let status_path = format!("{}/user_events_status", base_path);
-        
+
         match fs::read_to_string(&status_path) {
             Ok(status) => Ok(status),
             Err(e) => {
@@ -282,8 +282,6 @@ impl Drop for UserEventsListenerGuard {
     }
 }
 
-
-
 fn setup_provider_default() -> SdkLoggerProvider {
     let user_event_processor = Processor::builder(PROVIDER_NAME).build().unwrap();
 
@@ -296,7 +294,6 @@ fn setup_provider_default() -> SdkLoggerProvider {
         .with_log_processor(user_event_processor)
         .build()
 }
-
 
 fn bench_logs(c: &mut Criterion) {
     // Check if user events are supported, skip if not
@@ -331,8 +328,7 @@ fn bench_logs(c: &mut Criterion) {
     // 2) enabled
     group.bench_function(BenchmarkId::new("enabled", ""), |b| {
         let provider = setup_provider_default();
-        let _guard = UserEventsListenerGuard::enable(PROVIDER_NAME)
-            .expect("enable listener");
+        let _guard = UserEventsListenerGuard::enable(PROVIDER_NAME).expect("enable listener");
         let ot_layer = tracing_layer::OpenTelemetryTracingBridge::new(&provider);
         let subscriber = Registry::default().with(ot_layer);
 
@@ -356,7 +352,5 @@ fn bench_logs(c: &mut Criterion) {
     group.finish();
 }
 
-
 criterion_group!(benches, bench_logs);
 criterion_main!(benches);
-
