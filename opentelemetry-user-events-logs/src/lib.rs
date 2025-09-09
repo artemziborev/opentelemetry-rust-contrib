@@ -790,20 +790,23 @@ mod tests {
     }
 
     fn check_user_events_available() -> Result<String, String> {
-        let output = Command::new("sudo")
-            .arg("cat")
-            .arg("/sys/kernel/tracing/user_events_status")
-            .output()
-            .map_err(|e| format!("Failed to execute command: {e}"))?;
+        use std::fs;
+        use std::io;
 
-        if output.status.success() {
-            let status = String::from_utf8_lossy(&output.stdout);
-            Ok(status.to_string())
-        } else {
-            Err(format!(
-                "Command executed with failing error code: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ))
+        match fs::read_to_string("/sys/kernel/tracing/user_events_status") {
+            Ok(status) => Ok(status),
+            Err(e) => {
+                if e.kind() == io::ErrorKind::PermissionDenied {
+                    Err(format!(
+                        "Insufficient permissions to read '/sys/kernel/tracing/user_events_status'. Please run the test as root or with appropriate capabilities (CAP_SYS_ADMIN). Error: {}",
+                        e
+                    ))
+                } else if e.kind() == io::ErrorKind::NotFound {
+                    Err("User events subsystem not available on this system".to_string())
+                } else {
+                    Err(format!("Failed to check user events availability: {}", e))
+                }
+            }
         }
     }
 

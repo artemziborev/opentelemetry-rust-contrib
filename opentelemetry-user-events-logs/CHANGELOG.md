@@ -2,6 +2,28 @@
 
 ## vNext
 
+### Added
+
+- **Benchmark Suite**: Added comprehensive benchmark suite comparing user events performance
+  with listener enabled vs disabled states.
+  - Uses `criterion` for reliable performance measurements
+  - Automatically detects and uses tracefs (preferred) or debugfs (fallback) paths
+  - Gracefully skips benchmarks on systems without user_events support (kernel < 6.4)
+  - Provides clear performance comparison between enabled/disabled states
+  - Requires root privileges or CAP_SYS_ADMIN capability to run
+
+  Example usage:
+  ```bash
+  sudo -E ~/.cargo/bin/cargo bench --bench logs --all-features
+  ```
+
+  The benchmark compares:
+  - `user_events_logs/disabled`: Performance without listener (baseline)
+  - `user_events_logs/enabled`: Performance with listener active
+
+  Typical results show ~25x performance difference between states, demonstrating
+  the efficiency of the user_events subsystem when listeners are not active.
+
 ## v0.14.0
 
 Released 2025-July-24
